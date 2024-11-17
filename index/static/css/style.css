@@ -1,0 +1,70 @@
+body {
+    margin: 0px;
+    padding: 0px;
+    background-color: gray;
+}
+
+
+header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 50px;
+    background-color: white;
+}
+
+main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 100px;
+}
+
+
+#chessboard-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: white;
+    width: 700px;
+    height: 700px;
+}
+
+#chessboard {
+    background-color: gray;
+    min-width: 640px;
+    min-height: 640px;
+    max-width: 700px;
+    max-height: 700px;
+    border: 2px solid gray;
+    border-radius: 3px;
+}
+
+#chessboard>table tr {
+    padding: auto;
+    margin: auto;
+}
+
+#chessboard>table td {
+    margin: auto;
+    padding: auto;
+    border: 0cap;
+}
+
+.cell {
+    width: 80px;
+    height: 80px;
+}
+
+.white {
+    background-color: rgb(175, 173, 173);
+}
+
+.black {
+    background-color: rgb(40, 63, 40);
+}
+
+.red {
+    background-color: red;
+}
+
