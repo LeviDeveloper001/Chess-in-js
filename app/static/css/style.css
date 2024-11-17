@@ -68,3 +68,10 @@ main {
     background-color: red;
 }
 
+.yellow {
+    background-color: rgb(113, 113, 0);
+}
+
+.orange {
+    background-color: rgb(113, 74, 0);
+}

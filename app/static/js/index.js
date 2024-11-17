@@ -60,9 +60,12 @@ set_color_list();
 // cells:
 
 class Cell {
-    figure=null
+    selected_figure_class_dict = {
+        'white': 'yellow',
+        'black': 'yellow'
+    }
 
-    
+    figure=null
 
     constructor (col, row) {
         this.col=col
@@ -71,8 +74,13 @@ class Cell {
         this.div=document.createElement('div')
         this.td.appendChild(this.div)
         this.set_color()
+        this.set_selected_figure_class()
         this.set_class_name()
         this.element=this.td
+    }
+
+    set_selected_figure_class() {
+        this.selected_figure_class=this.selected_figure_class_dict[this.color]
     }
 
     set_color () {
@@ -111,8 +119,29 @@ class Cell {
         return this
     }
 
+
 }
 
+class BlackCell extends Cell {
+    selected_figure_class='orange'
+
+    constructor(col, row) {
+        super(col, row)
+    }
+}
+
+class WhiteCell extends Cell {
+    selected_figure_class='yellow'
+
+    constructor(col, row) {
+        super(col, row)
+    }
+}
+
+
+
+// let el = document.getElementById('d')
+// el.classList.remove()
 
 
 // chessboards:
@@ -121,15 +150,41 @@ class Chessboard {
 
     constructor () {
         this.element=document.getElementById('chessboard-table')
+        this.row_list=[]
+        this.col_list=[]
+        this.cell_list=[]
         this.add_cells()
         this.add_to_doc()
+        this.figure_list=[]
+        this.selected_figure=null
+    }
+
+    deselect_figure() {
+        if (this.selected_figure===null) return
+        this.selected_figure.element.classList.remove(
+            this.selected_figure.cell.selected_figure_class
+        )
+        this.selected_figure=null
+    }
+
+    select_figure(figure) {
+        this.deselect_figure()
+        this.selected_figure=figure
+        figure.element.classList.add(
+            figure.cell.selected_figure_class
+        )
+        
+    }
+
+    add_selected_figure_class(figure) {
+        if (!this.selected_figure) return
+        this.selected_figure.element.classList.add(
+
+        )
     }
 
     add_cells() {
-        this.row_list=[]
-        this.col_list=[]
-
-        this.cell_list=[]
+        
 
         for (let row=0;row<8;row++) {
 
@@ -224,7 +279,6 @@ class Figure {
     cell=null
     class_name=' figure '
     can_move=true
-    is_selected=false
 
     constructor(chessboard, cell) {
         this.chessboard=chessboard
@@ -235,7 +289,17 @@ class Figure {
 
     }
 
-    
+    is_selected() {
+        return this.chessboard.selected_figure===this
+    }
+
+    deselect() {
+
+    }
+
+    select() {
+        this.chessboard.select_figure(this)
+    }
 
 }
 
@@ -263,8 +327,16 @@ class MoveManager {
         this.add_select_figure_listener()
     }
 
-    add_select_figure_listener() {
 
+    add_select_figure_listener() {
+        const self = this
+        this.select_figure_listener = function() {
+            if (self.figure.is_selected()) return
+            self.figure.select()
+        }
+        this.figure.element.addEventListener('click',
+            this.select_figure_listener
+        )
     }
 
     get_allowed_moves(self) {
