@@ -65,6 +65,8 @@ class Cell {
         'black': 'yellow'
     }
 
+    allowed_move_class='allowed-move'
+
     figure=null
 
     constructor (col, row) {
@@ -147,16 +149,18 @@ class WhiteCell extends Cell {
 // chessboards:
 
 class Chessboard {
+    row_list=[]
+    col_list=[]
+    cell_list=[]
+    figure_list=[]
+    selected_figure=null
+    element=document.getElementById('chessboard-table')
+    allowed_moves_listeners = {}
 
     constructor () {
-        this.element=document.getElementById('chessboard-table')
-        this.row_list=[]
-        this.col_list=[]
-        this.cell_list=[]
         this.add_cells()
         this.add_to_doc()
-        this.figure_list=[]
-        this.selected_figure=null
+        
     }
 
     deselect_figure() {
@@ -164,7 +168,25 @@ class Chessboard {
         this.selected_figure.element.classList.remove(
             this.selected_figure.cell.selected_figure_class
         )
+        const prev_allowed_moves = this.selected_figure.move_manager.get_allowed_moves()
+        for (let cell of prev_allowed_moves) {
+            cell.element.classList.remove(cell.allowed_move_class)
+        }
         this.selected_figure=null
+        this.allowed_moves_listeners={}
+    }
+
+    create_allowed_moves_listeners(self, allowed_moves) {
+        let allowed_moves_listeners = self.allowed_moves_listeners
+        var listener = function() {
+            for (let cell of allowed_moves) {
+                cell.element.removeEventListener('click',
+                    allowed_moves_listeners[cell.get_position()]
+                )
+            }
+            console.log(allowed_moves_listeners)
+        }
+        return listener
     }
 
     select_figure(figure) {
@@ -173,15 +195,20 @@ class Chessboard {
         figure.element.classList.add(
             figure.cell.selected_figure_class
         )
+        const allowed_moves=figure.move_manager.get_allowed_moves()
+
+        for (let cell of allowed_moves){
+            var listener = this.create_allowed_moves_listeners(this, allowed_moves)
+            cell.element.addEventListener('click', listener)
+            this.allowed_moves_listeners[cell.get_position()]=listener
+            cell.element.classList.add(cell.allowed_move_class)
+            console.log(this.allowed_moves_listeners)
         
+        }
+
+        // console.log(this.allowed_moves_listeners)
     }
 
-    add_selected_figure_class(figure) {
-        if (!this.selected_figure) return
-        this.selected_figure.element.classList.add(
-
-        )
-    }
 
     add_cells() {
         
@@ -299,7 +326,10 @@ class Figure {
 
     select() {
         this.chessboard.select_figure(this)
+        const allowed_moves=this.move_manager.get_allowed_moves()
     }
+
+    
 
 }
 
@@ -318,7 +348,9 @@ class MoveManager {
     horizontal_movement=false
     diagonal_movement=false
     
-
+    move_patterns=[]
+    attack_patterns=[]
+    first_move_patterns=[]
 
     constructor (figure) {
         this.chessboard=figure.chessboard
@@ -338,41 +370,6 @@ class MoveManager {
             this.select_figure_listener
         )
     }
-
-    get_allowed_moves(self) {
-
-    }
-
-    move_to_another_cell(new_cell) {
-        new_cell.add_figure(this.figure)      
-    }
-}
-
-
-// pawn move managers:
-
-class PawnMoveManager extends MoveManager {
-    get_allowed_moves(self) {
-
-    }
-}
-
-class WhitePawnMoveManager extends PawnMoveManager {
-
-}
-
-class BlackPawnMoveManager extends PawnMoveManager {
-
-    first_move_patterns = [
-        [0,2],
-    ]
-
-    move_patterns=[
-        [0,1],
-    ]
-    attack_patterns=[
-        [1,1], [-1,1]
-    ]
 
     get_allowed_moves() {
         const allowed_moves = []
@@ -403,25 +400,65 @@ class BlackPawnMoveManager extends PawnMoveManager {
 
         return allowed_moves
     }
-    
-    select_figure() {
-        if (this.is_selected) {
-            return
-        }
-        this.is_selected=true
-        this.figure.element.removeEventListener('click',
-            this.select_figure_listener
-        )
-    }
 
-    add_select_figure_listener() {
-        this.select_figure_listener = () => {
-            this.select_figure()
-        }
-        this.figure.element.addEventListener('click',
-            this.select_figure_listener
-        )
+    move_to_another_cell(new_cell) {
+        new_cell.add_figure(this.figure)      
     }
+}
+
+
+// pawn move managers:
+
+class PawnMoveManager extends MoveManager {
+    
+}
+
+class WhitePawnMoveManager extends PawnMoveManager {
+    first_move_patterns = [
+        [0,-2],
+    ]
+
+    move_patterns=[
+        [0,-1],
+    ]
+    attack_patterns=[
+        [-1,-1], [1,-1]
+    ]
+}
+
+class BlackPawnMoveManager extends PawnMoveManager {
+
+    first_move_patterns = [
+        [0,2],
+    ]
+
+    move_patterns=[
+        [0,1],
+    ]
+    attack_patterns=[
+        [1,1], [-1,1]
+    ]
+
+    
+    
+    // select_figure() {
+    //     if (this.is_selected) {
+    //         return
+    //     }
+    //     this.is_selected=true
+    //     this.figure.element.removeEventListener('click',
+    //         this.select_figure_listener
+    //     )
+    // }
+
+    // add_select_figure_listener() {
+    //     this.select_figure_listener = () => {
+    //         this.select_figure()
+    //     }
+    //     this.figure.element.addEventListener('click',
+    //         this.select_figure_listener
+    //     )
+    // }
 
 }
 
@@ -454,9 +491,7 @@ class Pawn extends Figure {
         return element
     }
 
-    click_listener(figure) {
-        
-    }
+    
 
 }
 

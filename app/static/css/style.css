@@ -75,3 +75,9 @@ main {
 .orange {
     background-color: rgb(113, 74, 0);
 }
+
+
+.allowed-move {
+    background-color: aquamarine;
+}
+
