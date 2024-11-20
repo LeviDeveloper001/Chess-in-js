@@ -190,7 +190,7 @@ class Chessboard {
         )
         const prev_allowed_moves = this.selected_figure.move_manager.get_allowed_moves()
         for (let cell of prev_allowed_moves) {
-            cell.element.classList.remove(cell.allowed_move_class)
+            cell.div.classList.remove(cell.allowed_move_class)
             // cell.element.removeEventListener('click',
             //     this.allowed_moves_listeners[cell.get_position()]
             // )
@@ -206,7 +206,7 @@ class Chessboard {
                 cell.element.removeEventListener('click',
                     allowed_moves_listeners[cell.get_position()]
                 )
-                cell.element.classList.remove(cell.allowed_move_class)
+                cell.div.classList.remove(cell.allowed_move_class)
                 if(cell.element==this) {
                     self.selected_figure.move_manager.move_to_another_cell(cell)
                     self.deselect_figure()
@@ -229,7 +229,7 @@ class Chessboard {
             var listener = this.create_allowed_moves_listeners(this, allowed_moves)
             cell.element.addEventListener('click', listener)
             this.allowed_moves_listeners[cell.get_position()]=listener
-            cell.element.classList.add(cell.allowed_move_class)
+            cell.div.classList.add(cell.allowed_move_class)
             console.log(this.allowed_moves_listeners)
         
         }
@@ -726,6 +726,86 @@ class BlackRook extends Rook {
 }
 
 
+// knight figure:
+
+class KnightManager extends MoveManager {
+    move_patterns = [
+        [-1,-2],
+        [-1, 2],
+        [ 1, 2],
+        [ 1,-2],
+        [-2,-1],
+        [-2, 1],
+        [ 2,-1],
+        [ 2, 1]
+    ]
+    get_allowed_moves() {
+        const allowed_moves = []
+
+        const col_list=this.figure.chessboard.col_list
+        
+        let cur_row_num=this.figure.cell.row
+        let cur_col_num=this.figure.cell.col
+        
+        let posible_cell
+        let row_pos, col_pos
+
+        let patterns = this.move_patterns
+        
+        
+
+        for(let pos of patterns)  {
+            col_pos = pos[0] + cur_col_num
+            row_pos = pos[1] + cur_row_num
+            if (col_pos>7 || col_pos<0 || row_pos>7 || row_pos<0) continue
+            posible_cell = col_list[col_pos][row_pos]
+            if (!posible_cell) continue
+            if (posible_cell.is_empty()) {
+                allowed_moves.push(posible_cell)
+            } else if (posible_cell.figure.color!=this.figure.color) {
+                allowed_moves.push(posible_cell)
+            }
+        }
+
+        return allowed_moves
+    }
+}
+
+class Knight extends Figure {
+    name='knight'
+    constructor(chessboard, cell, color) {
+        super(chessboard, cell)
+        this.color=color
+        this.path_to_image=PATH_TO_FIGURE_IMAGES+ `${this.color}/${this.name}.png`
+        this.class_name=this.class_name + ` figure-${this.color} `
+        this.element=this.create_element()
+        this.cell.add_figure(this)
+    }
+}
+
+
+class WhiteKnightManager extends KnightManager {
+
+}
+
+class WhiteKnight extends Knight {
+    constructor(chessboard, cell) {
+        super(chessboard, cell, WHITE)
+        this.move_manager = new WhiteKnightManager(this)
+    }
+}
+
+class BlackKnightManager extends KnightManager {
+
+}
+
+class BlackKnight extends Knight {
+    constructor(chessboard, cell) {
+        super(chessboard, cell, BLACK)
+        this.move_manager = new BlackKnightManager(this)
+    }
+}
+
 
 // gaming:
 
@@ -779,6 +859,17 @@ class ChessGame {
         this.add_figures(black_figure_cells, BlackRook)
     }
 
+    add_knights() {
+        const white_figure_cells = [
+            this.chessboard.row_list[7][1], this.chessboard.row_list[7][6]
+        ]
+        this.add_figures(white_figure_cells, WhiteKnight)
+        const black_figure_cells = [
+            this.chessboard.row_list[0][1], this.chessboard.row_list[0][6]
+        ]
+        this.add_figures(black_figure_cells, BlackKnight)
+    }
+
 
 
     add_white_figures() {
@@ -794,6 +885,7 @@ class ChessGame {
         this.add_black_figures()
         this.add_bishops()
         this.add_rooks()
+        this.add_knights()
     }
 
 }
