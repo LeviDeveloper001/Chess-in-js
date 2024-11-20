@@ -373,108 +373,17 @@ class MoveManager {
         console.log(this.chessboard.game.current_move)
         this.completed_moves.push(new_cell)      
     }
-}
 
 
-// pawn move managers:
-
-class PawnMoveManager extends MoveManager {
-    get_allowed_moves() {
-        const allowed_moves = []
-
-        const col_list=this.figure.chessboard.col_list
-        
-        let cur_row_num=this.figure.cell.row
-        let cur_col_num=this.figure.cell.col
-        
-        let posible_cell
-        let row_pos, col_pos
-
-        let patterns
-        if (this.completed_moves.length==0) {
-            patterns = [...this.move_patterns.slice(0), ...this.first_move_patterns.slice(0)]
-        } else {
-            patterns = this.move_patterns.slice(0)
-        }
-        
-
-        for(let pos of patterns)  {
-            col_pos = pos[0]
-            row_pos = pos[1]
-            posible_cell = col_list[col_pos+cur_col_num][row_pos+cur_row_num]
-            if (posible_cell && posible_cell.is_empty()) {
-                allowed_moves.push(posible_cell)
-            }
-        }
-
-        for (let pos of this.attack_patterns) {
-            col_pos = pos[0] + cur_col_num
-            row_pos = pos[1] + cur_row_num 
-            if (col_pos>7 || col_pos<0 || row_pos>7 || row_pos<0) continue
-            posible_cell = col_list[col_pos][row_pos]
-            if (posible_cell.is_empty()) {
-
-            } else if (posible_cell.figure.color!=this.figure.color) {
-                allowed_moves.push(posible_cell)
-            }
-        }
-
-        return allowed_moves
+    get_allowed_moves () {
+        console.log('not set function')
+        return []
     }
-}
-
-class WhitePawnMoveManager extends PawnMoveManager {
-    first_move_patterns = [
-        [0,-2],
-    ]
-
-    move_patterns=[
-        [0,-1],
-    ]
-    attack_patterns=[
-        [-1,-1], [1,-1]
-    ]
-}
-
-class BlackPawnMoveManager extends PawnMoveManager {
-
-    first_move_patterns = [
-        [0,2],
-    ]
-
-    move_patterns=[
-        [0,1],
-    ]
-    attack_patterns=[
-        [1,1], [-1,1]
-    ]
-
-    
-    
-    // select_figure() {
-    //     if (this.is_selected) {
-    //         return
-    //     }
-    //     this.is_selected=true
-    //     this.figure.element.removeEventListener('click',
-    //         this.select_figure_listener
-    //     )
-    // }
-
-    // add_select_figure_listener() {
-    //     this.select_figure_listener = () => {
-    //         this.select_figure()
-    //     }
-    //     this.figure.element.addEventListener('click',
-    //         this.select_figure_listener
-    //     )
-    // }
 
 }
-
-
 
 class Figure {
+    name=null
     path_to_image=null
     element=null
     color=null
@@ -521,14 +430,60 @@ class Figure {
 
 // pawn figures:
 
-class Pawn extends Figure {
-    path_to_image=null
-    element=null
+class PawnMoveManager extends MoveManager {
+    get_allowed_moves() {
+        const allowed_moves = []
 
+        const col_list=this.figure.chessboard.col_list
+        
+        let cur_row_num=this.figure.cell.row
+        let cur_col_num=this.figure.cell.col
+        
+        let posible_cell
+        let row_pos, col_pos
+
+        let patterns
+        if (this.completed_moves.length==0) {
+            patterns = [...this.move_patterns.slice(0), ...this.first_move_patterns.slice(0)]
+        } else {
+            patterns = this.move_patterns.slice(0)
+        }
+        
+
+        for(let pos of patterns)  {
+            col_pos = pos[0] + cur_col_num
+            row_pos = pos[1] + cur_row_num
+            if (col_pos>7 || col_pos<0 || row_pos>7 || row_pos<0) continue
+            posible_cell = col_list[col_pos][row_pos]
+            if (posible_cell && posible_cell.is_empty()) {
+                allowed_moves.push(posible_cell)
+            } else if (!posible_cell.is_empty()) {
+                break
+            }
+        }
+
+        for (let pos of this.attack_patterns) {
+            col_pos = pos[0] + cur_col_num
+            row_pos = pos[1] + cur_row_num 
+            if (col_pos>7 || col_pos<0 || row_pos>7 || row_pos<0) continue
+            posible_cell = col_list[col_pos][row_pos]
+            if (posible_cell.is_empty()) {
+
+            } else if (posible_cell.figure.color!=this.figure.color) {
+                allowed_moves.push(posible_cell)
+            }
+        }
+
+        return allowed_moves
+    }
+}
+
+class Pawn extends Figure {
+    name='pawn'
     constructor(chessboard, cell, color) {
         super(chessboard, cell)
         this.color=color
-        this.path_to_image=PATH_TO_FIGURE_IMAGES+ `${this.color}/pawn.png`
+        this.path_to_image=PATH_TO_FIGURE_IMAGES+ `${this.color}/${this.name}.png`
         this.class_name=this.class_name + ` figure-${this.color} `
         this.element=this.create_element()
         this.cell.add_figure(this)
@@ -540,12 +495,43 @@ class Pawn extends Figure {
 
 }
 
+
+class WhitePawnMoveManager extends PawnMoveManager {
+    first_move_patterns = [
+        [0,-2],
+    ]
+
+    move_patterns=[
+        [0,-1],
+    ]
+    attack_patterns=[
+        [-1,-1], [1,-1]
+    ]
+}
+
 class WhitePawn extends Pawn {
     constructor(chessboard, cell) {
         super(chessboard, cell, 'white')
         this.move_manager = new WhitePawnMoveManager(this)
     }
     
+}
+
+
+
+class BlackPawnMoveManager extends PawnMoveManager {
+
+    first_move_patterns = [
+        [0,2],
+    ]
+
+    move_patterns=[
+        [0,1],
+    ]
+    attack_patterns=[
+        [1,1], [-1,1]
+    ]
+
 }
 
 class BlackPawn extends Pawn {
@@ -558,19 +544,186 @@ class BlackPawn extends Pawn {
 }
 
 
-// bishop figures:
+// bishops figures:
+
+class BishopMoveManager extends MoveManager {
+    move_patterns = [
+        [],
+        [],
+        [],
+        [],
+    ]
+    constructor(figure) {
+        super(figure)
+        this.set_move_patterns()
+        console.log(this)
+    }
+
+    set_move_patterns() {
+        for (let i=1; i<8; i++) {
+            this.move_patterns[0].push( [ i, i] )
+            this.move_patterns[1].push( [-i,-i] )
+            this.move_patterns[2].push( [i,-i] )
+            this.move_patterns[3].push( [-i,i] )
+        }
+    }
+
+    get_allowed_moves() {
+        const allowed_moves = []
+
+        const col_list=this.figure.chessboard.col_list
+        
+        let cur_row_num=this.figure.cell.row
+        let cur_col_num=this.figure.cell.col
+        
+        let posible_cell
+        let row_pos, col_pos
+
+        for (let patterns of this.move_patterns) {
+            for (let pos of patterns) {
+                col_pos = pos[0] + cur_col_num
+                row_pos = pos[1] + cur_row_num
+                if (col_pos>7 || col_pos<0 || row_pos>7 || row_pos<0) continue
+                posible_cell = col_list[col_pos][row_pos]
+                if (!posible_cell) break
+                if (posible_cell.is_empty()) {
+                    allowed_moves.push(posible_cell)
+                } else if (posible_cell.figure.color!=this.figure.color) {
+                    allowed_moves.push(posible_cell)
+                    break
+                } else break
+            }
+        }
+        console.log(allowed_moves)
+        return allowed_moves
+
+    }
+
+}
+
 class Bishop extends Figure {
- 
+    constructor(chessboard, cell, color) {
+        super(chessboard, cell)
+        this.color=color
+        this.path_to_image=PATH_TO_FIGURE_IMAGES+ `${this.color}/bishop.png`
+        this.class_name=this.class_name + ` figure-${this.color} `
+        this.element=this.create_element()
+        this.cell.add_figure(this)
+    }
+}
+
+class WhiteBishopMoveManager extends BishopMoveManager {
+    
 }
 
 class WhiteBishop extends Bishop {
+    constructor (chessboard, cell) {
+        super(chessboard, cell, WHITE)
+        this.move_manager = new WhiteBishopMoveManager(this)
+    }
+}
+
+class BlackBishopMoveManager extends BishopMoveManager {
 
 }
 
 class BlackBishop extends Bishop {
+    constructor (chessboard, cell) {
+        super(chessboard, cell, BLACK)
+        this.move_manager = new BlackBishopMoveManager(this)
+    }
+}
+
+
+// rook figures:
+
+class RookManager extends MoveManager {
+    move_patterns = [
+        [],
+        [],
+        [],
+        [],
+    ]
+    constructor(figure) {
+        super(figure)
+        this.set_move_patterns()
+        console.log(this)
+    }
+
+    set_move_patterns() {
+        for (let i=1; i<8; i++) {
+            this.move_patterns[0].push( [-i, 0] )
+            this.move_patterns[1].push( [ i, 0] )
+            this.move_patterns[2].push( [ 0,-i] )
+            this.move_patterns[3].push( [ 0, i] )
+        }
+    }
+
+    get_allowed_moves() {
+        const allowed_moves = []
+
+        const col_list=this.figure.chessboard.col_list
+        
+        let cur_row_num=this.figure.cell.row
+        let cur_col_num=this.figure.cell.col
+        
+        let posible_cell
+        let row_pos, col_pos
+
+        for (let patterns of this.move_patterns) {
+            for (let pos of patterns) {
+                col_pos = pos[0] + cur_col_num
+                row_pos = pos[1] + cur_row_num
+                if (col_pos>7 || col_pos<0 || row_pos>7 || row_pos<0) continue
+                posible_cell = col_list[col_pos][row_pos]
+                if (!posible_cell) break
+                if (posible_cell.is_empty()) {
+                    allowed_moves.push(posible_cell)
+                } else if (posible_cell.figure.color!=this.figure.color) {
+                    allowed_moves.push(posible_cell)
+                    break
+                } else break
+            }
+        }
+        console.log(allowed_moves)
+        return allowed_moves
+
+    }
+}
+
+class Rook extends Figure {
+    name='rook'
+    constructor(chessboard, cell, color) {
+        super(chessboard, cell)
+        this.color=color
+        this.path_to_image=PATH_TO_FIGURE_IMAGES+ `${this.color}/${this.name}.png`
+        this.class_name=this.class_name + ` figure-${this.color} `
+        this.element=this.create_element()
+        this.cell.add_figure(this)
+    }
+}
+
+class WhiteRookManager extends RookManager {
+
+}
+
+class WhiteRook extends Rook {
+    constructor(chessboard, cell) {
+        super(chessboard, cell, WHITE)
+        this.move_manager = new WhiteRookManager(this)
+    }
+}
+
+class BlackRookManager extends RookManager {
     
 }
 
+class BlackRook extends Rook {
+    constructor(chessboard, cell) {
+        super(chessboard, cell, BLACK)
+        this.move_manager = new BlackRookManager(this)
+    }
+}
 
 
 
@@ -603,6 +756,30 @@ class ChessGame {
         this.add_pawns(1, BlackPawn)
     }
 
+    add_bishops() {
+        const white_bishop_cells = [
+            this.chessboard.row_list[7][2], this.chessboard.row_list[7][5]
+        ]
+        this.add_figures(white_bishop_cells, WhiteBishop)
+        const black_bishop_cells = [
+            this.chessboard.row_list[0][2], this.chessboard.row_list[0][5]
+        ]
+        this.add_figures(black_bishop_cells, BlackBishop)
+        
+    }
+
+    add_rooks() {
+        const white_figure_cells = [
+            this.chessboard.row_list[7][0], this.chessboard.row_list[7][7]
+        ]
+        this.add_figures(white_figure_cells, WhiteRook)
+        const black_figure_cells = [
+            this.chessboard.row_list[0][0], this.chessboard.row_list[0][7]
+        ]
+        this.add_figures(black_figure_cells, BlackRook)
+    }
+
+
 
     add_white_figures() {
         this.add_white_pawns()
@@ -615,6 +792,8 @@ class ChessGame {
     add_all_figures() {
         this.add_white_figures()
         this.add_black_figures()
+        this.add_bishops()
+        this.add_rooks()
     }
 
 }
