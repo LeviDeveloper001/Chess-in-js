@@ -807,6 +807,105 @@ class BlackKnight extends Knight {
 }
 
 
+// queen figures:
+
+
+class QueenManager extends MoveManager {
+    move_patterns = [
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+    ]
+    constructor(figure) {
+        super(figure)
+        this.set_move_patterns()
+        console.log(this)
+    }
+
+    set_move_patterns() {
+        for (let i=1; i<8; i++) {
+            this.move_patterns[0].push( [-i, 0] )
+            this.move_patterns[1].push( [ i, 0] )
+            this.move_patterns[2].push( [ 0,-i] )
+            this.move_patterns[3].push( [ 0, i] )
+            this.move_patterns[4].push( [ i, i] )
+            this.move_patterns[5].push( [-i,-i] )
+            this.move_patterns[6].push( [i,-i] )
+            this.move_patterns[7].push( [-i,i] )
+        }
+    }
+
+    get_allowed_moves() {
+        const allowed_moves = []
+
+        const col_list=this.figure.chessboard.col_list
+        
+        let cur_row_num=this.figure.cell.row
+        let cur_col_num=this.figure.cell.col
+        
+        let posible_cell
+        let row_pos, col_pos
+
+        for (let patterns of this.move_patterns) {
+            for (let pos of patterns) {
+                col_pos = pos[0] + cur_col_num
+                row_pos = pos[1] + cur_row_num
+                if (col_pos>7 || col_pos<0 || row_pos>7 || row_pos<0) continue
+                posible_cell = col_list[col_pos][row_pos]
+                if (!posible_cell) break
+                if (posible_cell.is_empty()) {
+                    allowed_moves.push(posible_cell)
+                } else if (posible_cell.figure.color!=this.figure.color) {
+                    allowed_moves.push(posible_cell)
+                    break
+                } else break
+            }
+        }
+        console.log(allowed_moves)
+        return allowed_moves
+
+    }
+}
+
+class Queen extends Figure {
+    name='queen'
+    constructor(chessboard, cell, color) {
+        super(chessboard, cell)
+        this.color=color
+        this.path_to_image=PATH_TO_FIGURE_IMAGES+ `${this.color}/${this.name}.png`
+        this.class_name=this.class_name + ` figure-${this.color} `
+        this.element=this.create_element()
+        this.cell.add_figure(this)
+    }
+}
+
+class WhiteQueenManager extends QueenManager {
+
+}
+
+class WhiteQueen extends Queen {
+    constructor(chessboard, cell) {
+        super(chessboard, cell, WHITE)
+        this.move_manager = new WhiteQueenManager(this)
+    }
+}
+
+class BlackQueenManager extends QueenManager {
+    
+}
+
+class BlackQueen extends Queen {
+    constructor(chessboard, cell) {
+        super(chessboard, cell, BLACK)
+        this.move_manager = new BlackQueenManager(this)
+    }
+}
+
 // gaming:
 
 class ChessGame {
@@ -870,7 +969,16 @@ class ChessGame {
         this.add_figures(black_figure_cells, BlackKnight)
     }
 
-
+    add_queens() {
+        const white_figure_cells = [
+            this.chessboard.row_list[7][3]
+        ]
+        this.add_figures(white_figure_cells, WhiteQueen)
+        const black_figure_cells = [
+            this.chessboard.row_list[0][3], this.chessboard.row_list[0][6]
+        ]
+        this.add_figures(black_figure_cells, BlackQueen)
+    }
 
     add_white_figures() {
         this.add_white_pawns()
@@ -886,6 +994,7 @@ class ChessGame {
         this.add_bishops()
         this.add_rooks()
         this.add_knights()
+        this.add_queens()
     }
 
 }
