@@ -113,6 +113,10 @@ class Cell {
     }
 
     add_figure(figure) {
+        if (!this.is_empty()) {
+            console.log('not empty')
+            this.div.removeChild(this.figure.element)
+        }
         this.figure=figure
         this.figure.cell=this
         this.div.appendChild(
@@ -183,6 +187,11 @@ class Chessboard {
                 cell.element.removeEventListener('click',
                     allowed_moves_listeners[cell.get_position()]
                 )
+                cell.element.classList.remove(cell.allowed_move_class)
+                if(cell.element==this) {
+                    self.selected_figure.move_manager.move_to_another_cell(cell)
+                    self.deselect_figure()
+                }
             }
             console.log(allowed_moves_listeners)
         }
@@ -371,6 +380,18 @@ class MoveManager {
         )
     }
 
+    
+
+    move_to_another_cell(new_cell) {
+        new_cell.add_figure(this.figure)
+        this.completed_moves.push(new_cell)      
+    }
+}
+
+
+// pawn move managers:
+
+class PawnMoveManager extends MoveManager {
     get_allowed_moves() {
         const allowed_moves = []
 
@@ -388,6 +409,7 @@ class MoveManager {
         } else {
             patterns = this.move_patterns.slice(0)
         }
+        
 
         for(let pos of patterns)  {
             col_pos = pos[0]
@@ -398,19 +420,19 @@ class MoveManager {
             }
         }
 
+        for (let pos of this.attack_patterns) {
+            col_pos = pos[0]
+            row_pos = pos[1]
+            posible_cell = col_list[col_pos+cur_col_num][row_pos+cur_row_num]
+            if (posible_cell.is_empty()) {
+
+            } else if (posible_cell.figure.color!=this.figure.color) {
+                allowed_moves.push(posible_cell)
+            }
+        }
+
         return allowed_moves
     }
-
-    move_to_another_cell(new_cell) {
-        new_cell.add_figure(this.figure)      
-    }
-}
-
-
-// pawn move managers:
-
-class PawnMoveManager extends MoveManager {
-    
 }
 
 class WhitePawnMoveManager extends PawnMoveManager {
