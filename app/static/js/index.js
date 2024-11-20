@@ -9,6 +9,9 @@
 
 const PATH_TO_FIGURE_IMAGES = 'static/images/figures/'
 
+const BLACK = 'black'
+const WHITE = 'white'
+
 
 // subfunctions:
 
@@ -24,6 +27,13 @@ function get_by_index(arr, obj, k=0) {
     return arr[arr.indexOf(obj)+k]
 }
 
+function change_color(current_color) {
+    let changed_color
+    if (current_color==WHITE) {
+        return BLACK
+    } 
+    return WHITE
+}
 
 // other:
 
@@ -125,6 +135,11 @@ class Cell {
         return this
     }
 
+    move(figure) {
+        figure.cell.div.removeChild(figure.element)
+        figure.cell.figure=null
+        this.add_figure(figure)
+    }
 
 }
 
@@ -161,7 +176,8 @@ class Chessboard {
     element=document.getElementById('chessboard-table')
     allowed_moves_listeners = {}
 
-    constructor () {
+    constructor (game) {
+        this.game=game
         this.add_cells()
         this.add_to_doc()
         
@@ -175,6 +191,9 @@ class Chessboard {
         const prev_allowed_moves = this.selected_figure.move_manager.get_allowed_moves()
         for (let cell of prev_allowed_moves) {
             cell.element.classList.remove(cell.allowed_move_class)
+            // cell.element.removeEventListener('click',
+            //     this.allowed_moves_listeners[cell.get_position()]
+            // )
         }
         this.selected_figure=null
         this.allowed_moves_listeners={}
@@ -305,42 +324,7 @@ class Chessboard {
 
 // base for figures:
 
-class Figure {
-    path_to_image=null
-    element=null
-    color=null
-    img=null
-    img_width=80
-    img_height=80
-    cell=null
-    class_name=' figure '
-    can_move=true
 
-    constructor(chessboard, cell) {
-        this.chessboard=chessboard
-        this.cell=cell
-    }
-
-    add_click_listener(self) {
-
-    }
-
-    is_selected() {
-        return this.chessboard.selected_figure===this
-    }
-
-    deselect() {
-
-    }
-
-    select() {
-        this.chessboard.select_figure(this)
-        const allowed_moves=this.move_manager.get_allowed_moves()
-    }
-
-    
-
-}
 
 
 
@@ -365,25 +349,28 @@ class MoveManager {
         this.chessboard=figure.chessboard
         this.figure=figure
         this.cell=figure.cell
-        this.add_select_figure_listener()
+        this.add_select_figure_listener(this)
     }
 
 
-    add_select_figure_listener() {
-        const self = this
+    add_select_figure_listener(self) {
+        // const self = this
         this.select_figure_listener = function() {
             if (self.figure.is_selected()) return
             self.figure.select()
         }
-        this.figure.element.addEventListener('click',
-            this.select_figure_listener
+        self.figure.element.addEventListener('click',
+            self.select_figure_listener
         )
     }
 
     
 
     move_to_another_cell(new_cell) {
-        new_cell.add_figure(this.figure)
+        console.log(new_cell)
+        new_cell.move(this.figure)
+        this.chessboard.game.current_move = change_color(this.figure.color)
+        console.log(this.chessboard.game.current_move)
         this.completed_moves.push(new_cell)      
     }
 }
@@ -415,15 +402,16 @@ class PawnMoveManager extends MoveManager {
             col_pos = pos[0]
             row_pos = pos[1]
             posible_cell = col_list[col_pos+cur_col_num][row_pos+cur_row_num]
-            if (posible_cell.is_empty()) {
+            if (posible_cell && posible_cell.is_empty()) {
                 allowed_moves.push(posible_cell)
             }
         }
 
         for (let pos of this.attack_patterns) {
-            col_pos = pos[0]
-            row_pos = pos[1]
-            posible_cell = col_list[col_pos+cur_col_num][row_pos+cur_row_num]
+            col_pos = pos[0] + cur_col_num
+            row_pos = pos[1] + cur_row_num 
+            if (col_pos>7 || col_pos<0 || row_pos>7 || row_pos<0) continue
+            posible_cell = col_list[col_pos][row_pos]
             if (posible_cell.is_empty()) {
 
             } else if (posible_cell.figure.color!=this.figure.color) {
@@ -486,6 +474,51 @@ class BlackPawnMoveManager extends PawnMoveManager {
 
 
 
+class Figure {
+    path_to_image=null
+    element=null
+    color=null
+    img=null
+    img_width=80
+    img_height=80
+    cell=null
+    class_name=' figure '
+    can_move=true
+
+    constructor(chessboard, cell) {
+        this.chessboard=chessboard
+        this.cell=cell
+    }
+
+    create_element() {
+        const element=document.createElement('img')
+        element.className=this.class_name
+        element.src=this.path_to_image
+        element.width=this.img_width
+        element.height=this.img_height
+        this.img=element
+        return element
+    }    
+
+    is_selected() {
+        return this.chessboard.selected_figure===this
+    }
+
+    deselect() {
+
+    }
+
+    select() {
+        if (!(this.chessboard.game.current_move==this.color)) return
+        this.chessboard.select_figure(this)
+        const allowed_moves=this.move_manager.get_allowed_moves()
+    }
+
+    
+
+}
+
+
 // pawn figures:
 
 class Pawn extends Figure {
@@ -497,21 +530,11 @@ class Pawn extends Figure {
         this.color=color
         this.path_to_image=PATH_TO_FIGURE_IMAGES+ `${this.color}/pawn.png`
         this.class_name=this.class_name + ` figure-${this.color} `
-        this.cell=cell
         this.element=this.create_element()
         this.cell.add_figure(this)
-        this.add_click_listener(this)
     }
 
-    create_element() {
-        const element=document.createElement('img')
-        element.className=this.class_name
-        element.src=this.path_to_image
-        element.width=this.img_width
-        element.height=this.img_height
-        this.img=element
-        return element
-    }
+    
 
     
 
@@ -535,7 +558,18 @@ class BlackPawn extends Pawn {
 }
 
 
+// bishop figures:
+class Bishop extends Figure {
+ 
+}
 
+class WhiteBishop extends Bishop {
+
+}
+
+class BlackBishop extends Bishop {
+    
+}
 
 
 
@@ -543,9 +577,10 @@ class BlackPawn extends Pawn {
 // gaming:
 
 class ChessGame {
+    current_move=WHITE
     
     constructor() {
-        this.chessboard=new Chessboard()
+        this.chessboard=new Chessboard(this)
         this.add_all_figures()
     }
 
@@ -567,6 +602,7 @@ class ChessGame {
     add_black_pawns() {
         this.add_pawns(1, BlackPawn)
     }
+
 
     add_white_figures() {
         this.add_white_pawns()
