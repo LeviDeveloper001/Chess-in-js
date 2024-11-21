@@ -69,6 +69,24 @@ set_color_list();
 
 // cells:
 
+class Move {
+    constructor(prev_cell, next_cell, figure) {
+        this.prev_cell = prev_cell
+        this.next_cell = next_cell
+        this.figure = figure
+        this.game = figure.chessboard.game
+        this.prev_allowed_moves = figure.move_manager.get_allowed_moves()
+        this.move()
+        this.next_allowed_moves = figure.move_manager.get_allowed_moves()
+        console.log(this.prev_allowed_moves, this.next_allowed_moves)
+    }
+
+    move() {
+        this.next_cell.move(this.figure)
+    }
+}
+
+
 class Cell {
     selected_figure_class_dict = {
         'white': 'yellow',
@@ -191,6 +209,9 @@ class Chessboard {
         const prev_allowed_moves = this.selected_figure.move_manager.get_allowed_moves()
         for (let cell of prev_allowed_moves) {
             cell.div.classList.remove(cell.allowed_move_class)
+            cell.element.removeEventListener('click',
+                this.allowed_moves_listeners[cell.get_position()]
+            )
             // cell.element.removeEventListener('click',
             //     this.allowed_moves_listeners[cell.get_position()]
             // )
@@ -230,7 +251,6 @@ class Chessboard {
             cell.element.addEventListener('click', listener)
             this.allowed_moves_listeners[cell.get_position()]=listener
             cell.div.classList.add(cell.allowed_move_class)
-            console.log(this.allowed_moves_listeners)
         
         }
 
@@ -367,9 +387,8 @@ class MoveManager {
     
 
     move_to_another_cell(new_cell) {
-        console.log(new_cell)
-        new_cell.move(this.figure)
-        this.chessboard.game.current_move = change_color(this.figure.color)
+        const move = new Move(this.figure.cell, new_cell, this.figure)
+        this.chessboard.game.change_current_move(move)
         console.log(this.chessboard.game.current_move)
         this.completed_moves.push(new_cell)      
     }
@@ -418,9 +437,9 @@ class Figure {
     }
 
     select() {
-        if (!(this.chessboard.game.current_move==this.color)) return
+        if (this.chessboard.game.current_move!==this.color) return
         this.chessboard.select_figure(this)
-        const allowed_moves=this.move_manager.get_allowed_moves()
+        // const allowed_moves=this.move_manager.get_allowed_moves()
     }
 
     
@@ -556,7 +575,6 @@ class BishopMoveManager extends MoveManager {
     constructor(figure) {
         super(figure)
         this.set_move_patterns()
-        console.log(this)
     }
 
     set_move_patterns() {
@@ -647,7 +665,6 @@ class RookManager extends MoveManager {
     constructor(figure) {
         super(figure)
         this.set_move_patterns()
-        console.log(this)
     }
 
     set_move_patterns() {
@@ -824,7 +841,6 @@ class QueenManager extends MoveManager {
     constructor(figure) {
         super(figure)
         this.set_move_patterns()
-        console.log(this)
     }
 
     set_move_patterns() {
@@ -990,12 +1006,20 @@ class BlackKing extends King {
 
 // gaming:
 
+
+
 class ChessGame {
     current_move=WHITE
+    move_history=[]
     
     constructor() {
         this.chessboard=new Chessboard(this)
         this.add_all_figures()
+    }
+
+    change_current_move(move) {
+        this.move_history.push(move)
+        this.current_move = change_color(move.figure.color)
     }
 
     add_figures(cells, figureClass) {
