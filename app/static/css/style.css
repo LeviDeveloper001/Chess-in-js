@@ -15,9 +15,10 @@ header {
 
 main {
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 100px;
+    padding: 20px;
 }
 
 
@@ -52,6 +53,7 @@ main {
 }
 
 .cell {
+    box-sizing: border-box;
     width: 80px;
     height: 80px;
 }
@@ -78,6 +80,36 @@ main {
 
 
 .allowed-move {
-    background-color: rgb(81, 104, 96);
+    border: 3px solid green;
+    border-radius: 10px;
 }
+
+
+
+.select-transformation-figure-wrapper {
+    height: 120px;
+    background-color: gray;
+    border: 1px solid black;
+    border-radius: 10px;
+    margin-top: 5px;
+    /* width: 1000px; */
+}
+
+.select-transformation-figure {
+
+}
+
+.select-transformation-figure>h3 {
+    margin: 3px;
+    text-align: center;
+}
+
+
+
+
+
+
+
+
+
 

@@ -75,14 +75,12 @@ class Move {
         this.next_cell = next_cell
         this.figure = figure
         this.game = figure.chessboard.game
-        this.prev_allowed_moves = figure.move_manager.get_allowed_moves()
-        this.move()
-        this.next_allowed_moves = figure.move_manager.get_allowed_moves()
-        console.log(this.prev_allowed_moves, this.next_allowed_moves)
+        // this.prev_allowed_moves = figure.move_manager.get_allowed_moves()
     }
 
     move() {
         this.next_cell.move(this.figure)
+        this.next_allowed_moves = this.figure.move_manager.get_allowed_moves()
     }
 }
 
@@ -327,6 +325,19 @@ class Chessboard {
     get_row_by_figure(figure) {
         return this.get_row_by_num(figure.cell.row)
     }
+
+    get_king(color) {
+        this.game.get_king(color)
+    }
+
+    get_black_king() {
+        this.game.get_black_king()
+    }
+
+    get_white_king() {
+        this.game.get_white_king()
+    }
+
 }
 
 
@@ -388,15 +399,29 @@ class MoveManager {
 
     move_to_another_cell(new_cell) {
         const move = new Move(this.figure.cell, new_cell, this.figure)
+        move.move()
         this.chessboard.game.change_current_move(move)
         console.log(this.chessboard.game.current_move)
         this.completed_moves.push(new_cell)      
     }
 
+    shah_posible(to_cell) {
+        const king = this.chessboard.get_king(this.figure.color)
+        const move = new Move(this.cell, to_cell, this.figure)
+        console.log(move)
+        return false
+    }
 
-    get_allowed_moves () {
-        console.log('not set function')
-        return []
+    processing_allowed_moves (allowed_moves) {
+        const pop_cells=[]
+        for (let cell of allowed_moves) {
+            if (this.shah_posible(cell)) {
+                pop_cells.push(cell)
+            }
+        }
+        for (let pop_cell of pop_cells) {
+            allowed_moves.pop(allowed_moves.indexOf(pop_cell))
+        }
     }
 
 }
@@ -450,7 +475,7 @@ class Figure {
 // pawn figures:
 
 class PawnMoveManager extends MoveManager {
-    get_allowed_moves() {
+    get_allowed_moves(ignored_figure=null) {
         const allowed_moves = []
 
         const col_list=this.figure.chessboard.col_list
@@ -492,7 +517,7 @@ class PawnMoveManager extends MoveManager {
                 allowed_moves.push(posible_cell)
             }
         }
-
+        this.processing_allowed_moves(allowed_moves)
         return allowed_moves
     }
 }
@@ -1008,9 +1033,26 @@ class BlackKing extends King {
 
 
 
+class PawnTransform {
+    element=document.getElementById('select-transformation-figure')
+    h3=null
+
+    constructor(pawn) {
+        this.h3=document.createElement('h3')
+        this.h3.textContent='Выберите фигуру:'
+        this.cell=pawn.cell
+        this.figure = this.cell.figure
+
+    }
+}
+
 class ChessGame {
     current_move=WHITE
     move_history=[]
+    kings = {
+        'white': null,
+        'black': null,
+    }
     
     constructor() {
         this.chessboard=new Chessboard(this)
@@ -1023,9 +1065,13 @@ class ChessGame {
     }
 
     add_figures(cells, figureClass) {
+        const figure_list = []
+        let figure
         for(let cell of cells) {
-            new figureClass(this.chessboard, cell)
+            figure = new figureClass(this.chessboard, cell)
+            figure_list.push(figure)
         }
+        return figure_list
     }
 
     add_pawns(row_number, pawnClass) {
@@ -1090,11 +1136,14 @@ class ChessGame {
         const white_figure_cells = [
             this.chessboard.row_list[7][4]
         ]
-        this.add_figures(white_figure_cells, WhiteKing)
+        const white_king = this.add_figures(white_figure_cells, WhiteKing)[0]
+        this.kings[WHITE] = white_king
         const black_figure_cells = [
             this.chessboard.row_list[0][4]
         ]
-        this.add_figures(black_figure_cells, BlackKing)
+        const black_king = this.add_figures(black_figure_cells, BlackKing)[0]
+        this.kings[BLACK] = black_king
+        console.log(this.get_black_king(), this.get_white_king())
     }
 
     add_white_figures() {
@@ -1113,6 +1162,18 @@ class ChessGame {
         this.add_knights()
         this.add_queens()
         this.add_kings()
+    }
+
+    get_king(color) {
+        return this.kings[color]
+    }
+
+    get_black_king() {
+        return this.get_king(BLACK)
+    }
+
+    get_white_king() {
+        return this.get_king(WHITE)
     }
 
 }
