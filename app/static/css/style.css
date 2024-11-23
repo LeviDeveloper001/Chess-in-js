@@ -95,7 +95,7 @@ main {
 .select-transformation-figure-wrapper {
     height: 120px;
     background-color: gray;
-    border: 1px solid black;
+    /* border: 1px solid black; */
     border-radius: 10px;
     margin-top: 5px;
     /* width: 1000px; */
@@ -110,8 +110,14 @@ main {
     text-align: center;
 }
 
+.selectable-figure {
+    border-radius: 10px;
+    cursor: pointer;
+}
 
-
+.selectable-figure:hover {
+    background-color: black;
+}
 
 
 

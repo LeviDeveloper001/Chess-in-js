@@ -454,6 +454,7 @@ class Figure {
     }    
 
     is_selected() {
+        console.log(this)
         return this.chessboard.selected_figure===this
     }
 
@@ -520,6 +521,15 @@ class PawnMoveManager extends MoveManager {
         this.processing_allowed_moves(allowed_moves)
         return allowed_moves
     }
+
+
+    move_to_another_cell(new_cell) {
+        super.move_to_another_cell(new_cell)
+        if (new_cell.row == 0 || new_cell.row==7) {
+            new PawnTransform(this.figure)
+        }
+    }
+
 }
 
 class Pawn extends Figure {
@@ -1031,19 +1041,91 @@ class BlackKing extends King {
 
 // gaming:
 
+const figure_classes = {
+    'black': {
+        'pawn': BlackPawn,
+        'rook': BlackRook,
+        'knight': BlackKnight,
+        'bishop': BlackBishop,
+        'queen': BlackQueen,
+        'king': BlackKing,
+    },
+    'white': {
+        'pawn': WhitePawn,
+        'rook': WhiteRook,
+        'knight': WhiteKnight,
+        'bishop': WhiteBishop,
+        'queen': WhiteQueen,
+        'king': WhiteKing,
+    }
+}
+
+function get_figure_class(color, name) {
+    return figure_classes[color][name]
+}
 
 
 class PawnTransform {
-    element=document.getElementById('select-transformation-figure')
+    element=null
+    element_wrapper=document.getElementById('select-transformation-figure-wrapper')
     h3=null
+    figure_width=80
+    figure_height=80
+    transform_figure_names=[
+        'queen', 'rook', 'knight', 'bishop'
+    ]
+    img_listeners = {}
 
     constructor(pawn) {
+        this.element=document.createElement('div')
+        this.element.id='select-transformation-figure'
+        this.element_wrapper.appendChild(this.element)
         this.h3=document.createElement('h3')
         this.h3.textContent='Выберите фигуру:'
+        this.element.appendChild(this.h3)
         this.cell=pawn.cell
         this.figure = this.cell.figure
+        this.chessboard = pawn.chessboard
+        this.create_img_elements()
+    }
+
+    create_img_elements() {
+        let img
+        for (let name of this.transform_figure_names) {
+            img = document.createElement('img')
+            img.src = PATH_TO_FIGURE_IMAGES+`${this.figure.color}/${name}.png`
+            img.classList.add('selectable-figure')
+            img.width=this.figure_width
+            img.height=this.figure_height
+            img.setAttribute('figure_name', name)
+            img.setAttribute('color', this.figure.color)
+            this.element.appendChild(img)
+            var listener = this.create_img_listener(this, img)
+            img.addEventListener('click', listener)
+            // img.getAttribute()
+        }
+    }
+
+    create_img_listener(self, img) {
+        var listener = function() {
+            let color = this.getAttribute('color')
+            let name = this.getAttribute('figure_name')
+            let figureClass = get_figure_class(color, name)
+            let figure = new figureClass(self.chessboard, self.cell)
+            console.log(figure)
+            // self.cell.figure=null
+            // self.cell.add_figure(figure)
+            self.img_listeners={}
+            self.element_wrapper.removeChild(self.element)
+        }
+        self.img_listeners[img]=listener
+        return listener
+    }
+
+    img_listener() {
 
     }
+
 }
 
 class ChessGame {
@@ -1175,6 +1257,40 @@ class ChessGame {
     get_white_king() {
         return this.get_king(WHITE)
     }
+
+    get_all_figures() {
+        const figure_list=[]
+        const col_list = this.chessboard.col_list
+        for (let col of col_list) {
+            for (let cell of col) {
+                if (cell.is_empty()) continue
+                figure_list.push(cell.figure)
+            }
+        }
+        return figure_list
+    }
+
+    get_figure_list_by_color(color) {
+        const figure_list=[]
+        const col_list = this.chessboard.col_list
+        for (let col of col_list) {
+            for (let cell of col) {
+                if (cell.is_empty() || cell.figure.color!=color) continue
+                figure_list.push(cell.figure)
+            }
+        }
+        return figure_list
+    }
+
+    get_white_figures() {
+        return this.get_figure_list_by_color(WHITE)
+    }
+
+    get_black_figures() {
+        return this.get_figure_list_by_color(BLACK)
+    }
+
+    
 
 }
 
