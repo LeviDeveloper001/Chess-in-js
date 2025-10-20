@@ -119,9 +119,28 @@ main {
     background-color: black;
 }
 
+.choosemode {
+    display: flex;
+    justify-content: center;
+    margin: 10px 0px 0px 0px;
+}
 
+.gamemode {
+    width: 200px;
+    height: 60px;
+    font-size: 1.5em;
+    color: white;
+    background-color: gray;
+    border: 3px solid white;
+    border-radius: 5px;
+    margin: 0px 10px;
+    cursor: pointer;
 
+    transition: background-color 0.3s ease-in-out;
+}
 
-
+.gamemode:hover {
+    background-color: black;
+}
 
 

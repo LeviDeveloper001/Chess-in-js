@@ -159,6 +159,8 @@ class Cell {
         return this;
     }
 
+
+
     move(figure) {
         figure.cell.div.removeChild(figure.element);
         figure.cell.figure = null;
@@ -187,16 +189,26 @@ class WhiteCell extends Cell {
 
 // chessboards:
 
+// const chessboard_table_element = document.getElementById("chessboard-table");
+
+const chessboard_element = document.getElementById('chessboard');
+
 class Chessboard {
     row_list = [];
     col_list = [];
     cell_list = [];
     figure_list = [];
     selected_figure = null;
-    element = document.getElementById("chessboard-table");
     allowed_moves_listeners = {};
 
     constructor(game) {
+        let prev_cb_table = document.getElementById('chessboard-table')
+        if (prev_cb_table) {
+            chessboard_element.removeChild(prev_cb_table);
+        }
+        this.element = document.createElement("table")
+        this.element.id = 'chessboard-table'
+        chessboard_element.appendChild(this.element)
         this.game = game;
         this.add_cells();
         this.add_to_doc();
@@ -1089,6 +1101,7 @@ class ChessGame {
     constructor() {
         this.chessboard = new Chessboard(this);
         this.add_all_figures();
+        // this.random_move = new RandomMove(this);
     }
 
     change_current_move(move) {
@@ -1239,6 +1252,11 @@ class ChessGame {
     get_black_figures() {
         return this.get_figure_list_by_color(BLACK);
     }
+
+    removeGame() {
+        this.chessboard
+    }
+
 }
 
 
@@ -1295,9 +1313,8 @@ class ChessGame960 extends ChessGame {
     }
 }
 
-let game = new ChessGame960()
 
-const main = document.querySelector("main");
+
 
 class RandomMove {
     constructor(game) {
@@ -1326,10 +1343,11 @@ class RandomMove {
             this.game.all_figures_dict[this.game.current_move];
         let allowed_figure_list = [];
         for (let figure of cur_figure_list) {
-            if (figure.move_manager.get_allowed_moves().length !== 0) {
+            if (figure.move_manager.get_allowed_moves().length != 0) {
                 allowed_figure_list.push(figure);
             }
         }
+        console.log(this.game.all_figures_dict)
         let choiced_figure = choiceArrayElement(allowed_figure_list);
         if (!choiced_figure) return;
         choiced_figure.move_manager.move_to_another_cell(
@@ -1338,41 +1356,51 @@ class RandomMove {
     }
 }
 
-const random_move = new RandomMove(game);
 
 
-class ChangeGame {
-    games_dict = {
-        'ChessGame': {
-            'class': ChessGame,
-            'button_text': 'Классические шахматы'
 
-        },
-        'ChessGame960': {
-            'class': ChessGame960,
-            'button_text': 'Шахматы 960'
+const main = document.querySelector("main");
 
-        },
-    }
-    default_game = this.games_dict['ChessGame']
 
-    constructor () {
-        this.create_element()
+class UserSession {
+
+    gamemods = {
+        'gamemode-default': ChessGame,
+        'gamemode-960': ChessGame960,
     }
 
-    add_change_game_button (game_key) {
-
+    constructor() {
+        
+        this.game = new ChessGame();
+        this.gamemode = 'gamemode-default'
+        this.choosegame_listeners()
+        
     }
 
-    create_element() {
-        this.element = document.createElement('div')
-        this.element.classList.push('change-game-wrapper')
-        main.appendChild(this.element)
+
+    
+    choosegame_listeners() {
+        let def = document.getElementById('gamemode-default')
+        let g960 = document.getElementById('gamemode-960')
+        def.addEventListener('click', () => {
+            this.gamemode = 'gamemode-default'
+            this.game = new ChessGame()
+        } )
+        g960.addEventListener('click', () => {
+            this.gamemode = 'gamemode-960'
+            this.game = new ChessGame960()
+        } )
+        
     }
 
 }
 
-console.log(game);
+
+let session = new UserSession()
+
+
+
+console.log(session);
 
 
 
